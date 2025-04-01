@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15.3
+    ports:
+      - "5432:5432"
+    volumes:
+      # change node-template-volume
+      - node-template-volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: axiomq
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: users
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U axiomq -d users' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  service:
+    image: node-template:latest
+    ports:
+      - "3000:3000"
+    environment:
+      SERVER_PORT: '3000'
+      LOG_LEVEL: 'debug'
+      DB_USER: 'axiomq'
+      DB_PASSWORD: 'root'
+      DB_DATABASE: 'users'
+      DB_PORT: '5432'
+      DB_HOST: 'db'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  node-template-volume:
+  node-modules:
